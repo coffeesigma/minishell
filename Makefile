@@ -1,9 +1,9 @@
-CC = cc -Wall -Wextra -Werror
+CC = cc
 LIB_DIR = ./libft
 LIB = libft.a
-HEADER_M = mandatory/minishell.h
-HEADER_B = bonus/minishell_bonus.h
-SRCS_M = 
+SRCSDIR_M = parse
+SRCSDIR_B =
+SRCS_M = main.c parse/tokenizer.c
 SRCS_B = 
 OBJS_M = $(addprefix mandatory/, ${SRCS_M:.c=.o})
 OBJS_B = $(addprefix bonus/, ${SRCS_B:.c=.o})
@@ -11,11 +11,14 @@ NAME = minishell
 
 ifdef WITH_BONUS
 	OBJS = $(OBJS_B)
-	HEADER = $(HEADER_B)
+	SRCSDIRS = $(addprefix bonus/, $(SRCSDIR_B)) bonus
 else
 	OBJS = $(OBJS_M)
-	HEADER = $(HEADER_M)
+	SRCSDIRS = $(addprefix mandatory/, $(SRCSDIR_M)) mandatory
 endif
+
+DEPS = $(OBJS:.o=.d)
+CFLAGS = $(addprefix -I,$(SRCDIRS)) -Wall -Wextra -Werror
 
 .PHONY: all re clean fclean re bonus
 
@@ -24,8 +27,10 @@ all : $(NAME)
 bonus :
 	make WITH_BONUS=1
 
-.c.o : %.c $(HEADER)
-	$(CC) -c $< -o ${<:.c=.o}
+.c.o : %.c
+	$(CC) $(CFLAGS) -MMD -c $< -o $@
+
+-include $(DEPS)
 
 $(NAME) : $(OBJS) $(LIB_DIR)/$(LIB)
 	$(CC) -o $@ $(OBJS) -L$(LIB_DIR) -lft
@@ -35,8 +40,8 @@ $(LIB_DIR)/$(LIB) :
 	make bonus -C $(LIB_DIR)
 
 clean :
-	rm -f $(OBJS_M)
-	rm -f $(OBJS_B)
+	rm -f $(OBJS)
+	rm -f $(DEPS)
 	make fclean -C $(LIB_DIR)
 
 fclean : clean
