@@ -17,12 +17,20 @@
 # include <termios.h>
 # include <termcap.h>
 
-# define PROMPT "FASTshell$ "
+# define PROMPT "FastSHELL> "
+
+typedef struct s_redir
+{
+	char	*redir;
+	char	*filename;
+}	t_redir;
 
 typedef struct s_cmd
 {
 	char	*cmd;
 	char	**args;
+	int		is_pipe;
+	int		redirection;
 	int		pipe[2];
 }	t_cmd;
 
