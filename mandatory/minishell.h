@@ -1,6 +1,7 @@
 #ifndef MINISHELL_H
 # define MINISHELL_H
 
+# include "libft/libft.h"
 # include <stdio.h>
 # include <stdlib.h>
 # include <unistd.h>
@@ -19,53 +20,75 @@
 
 # define PROMPT "FastSHELL> "
 
-typedef struct s_redir
-{
-	char	*redir;
-	char	*filename;
-}	t_redir;
+typedef struct s_arg {
+	int		last_exit_code;
+	int		origin_stdin;
+	int		origin_stdout;
+	char	**envp;
+	t_list	*env_list;
+	t_list	*cmd_list;
+}	t_arg;
 
 typedef struct s_cmd
 {
 	char	*cmd;
-	char	**args;
-	int		is_pipe;
-	int		redirection;
-	int		pipe[2];
+	char	**argv;
+	int		pipe;
+	int		read_fd;
+	int		write_fd;
+	t_arg	*arg;
+	t_list	*redi_list;
 }	t_cmd;
 
-typedef struct s_env
-{
-	char			*name;
-	char			*value;
-	struct s_env	*next;
-}	t_env;
+// built_in.c
+int		ft_echo(char **cmd, t_arg *arg, int option);
+int		ft_cd(char **cmd, t_arg *arg);
+int		ft_pwd(char **cmd, t_arg *arg);
+int		ft_export(char **cmd, t_arg *arg);
+int		ft_unset(char **cmd, t_arg *arg);
+int		ft_env(char **cmd, t_arg *arg);
+int		ft_exit(char **cmd, t_arg *arg);
 
-typedef struct s_shell
-{
-	t_env		*env;
-	t_cmd		*cmd;
-}	t_shell;
+// env.c
+int		update_env(const char *key, t_arg *arg);
+int		unset_env(const char *key, t_arg *arg);
+t_list	*find_env(const char *key, t_arg *arg);
 
-// Mandatory functions
-void	ft_error(char *str);
-void	ft_free(char **str);
-void	ft_free_cmd(t_cmd *cmd);
-void	ft_free_env(t_env *env);
-void	ft_free_shell(t_shell *shell);
-void	ft_init_cmd(t_cmd *cmd);
-void	ft_init_env(t_env *env);
-void	ft_init_shell(t_shell *shell);
-void	ft_parse_cmd(t_shell *shell, char *line);
-void	ft_parse_env(t_shell *shell, char **env);
-void	ft_print_cmd(t_cmd *cmd);
-void	ft_print_env(t_env *env);
-void	ft_print_shell(t_shell *shell);
-void	ft_prompt(void);
-void	ft_run_cmd(t_shell *shell);
-void	ft_run_pipe(t_shell *shell);
-void	ft_run_shell(t_shell *shell);
-void	ft_set_env(t_shell *shell, char *name, char *value);
-void	ft_unset_env(t_shell *shell, char *name);
+char	*get_env_key(t_list *node);
+char	*get_env_value(t_list *node);
+
+// error.c
+typedef enum e_error_type {
+	error_systemcall = -127,
+	error_syntax,
+	error_access,
+	error_redirection,
+	error_ambiguous_redirection,
+	error_file,
+	error_max_heredoc,
+	error_built_in = -1,
+	invalid_identifier,
+	invalid_option
+}	t_error_type;
+
+void	handle_systemcall_error(void);
+int		print_error(char *cmd, char *arg, char *msg, t_error_type err_type);
+
+// execute.c
+int		run_child_process(t_arg *arg, int *fd, t_list *node);
+int		exec_cmds(t_arg *arg);
+
+// init.c
+int		init_arg(t_arg *arg, char **envp);
+int		env_list_to_envp(t_arg *arg);
+
+// debug.c
+void	print_list(t_list *lst);
+void	print_envp(char **envp);
+
+// util.c
+int		is_built_in(char *cmd);
+int		is_only_built_in(t_arg *arg);
+void	free_all(t_arg *arg);
 
 #endif
